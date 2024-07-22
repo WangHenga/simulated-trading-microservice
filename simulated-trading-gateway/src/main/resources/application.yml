@@ -9,6 +9,10 @@ spring:
           uri: lb://simulated-trading-user-service
           predicates:
             - Path=/user/**
+        - id: simulated-trading-instrument-service
+          uri: lb://simulated-trading-instrument-service
+          predicates:
+            - Path=/instrument/**
   application:
     name: simulated-trading-gateway
   main:
