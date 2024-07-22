@@ -1,0 +1,20 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    gateway:
+      routes:
+        - id: simulated-trading-user-service
+          uri: lb://simulated-trading-user-service
+          predicates:
+            - Path=/user/**
+  application:
+    name: simulated-trading-gateway
+  main:
+    web-application-type: reactive
+  web:
+    resources:
+      add-mappings: true
+server:
+  port: 80
