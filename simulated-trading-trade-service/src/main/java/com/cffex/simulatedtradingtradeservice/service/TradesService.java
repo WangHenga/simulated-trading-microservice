@@ -9,5 +9,5 @@ import com.cffex.simulatedtradingmodel.entity.Trades;
 * @createDate 2024-07-15 10:59:46
 */
 public interface TradesService extends IService<Trades> {
-
+    void trade(Integer orderId);
 }

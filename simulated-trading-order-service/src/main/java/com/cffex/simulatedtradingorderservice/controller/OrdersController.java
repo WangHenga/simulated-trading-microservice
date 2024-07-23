@@ -9,6 +9,7 @@ import com.cffex.simulatedtradingmodel.exception.BusinessException;
 import com.cffex.simulatedtradingmodel.dto.orders.OrderCreateRequest;
 import com.cffex.simulatedtradingmodel.entity.Orders;
 import com.cffex.simulatedtradingorderservice.service.OrdersService;
+import com.cffex.simulatedtradingserviceclient.TradeFeignClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,8 @@ import java.util.concurrent.CompletableFuture;
 public class OrdersController {
     @Resource
     private OrdersService ordersService;
+    @Resource
+    private TradeFeignClient tradeFeignClient;
     /**
      * 创建订单
      *
@@ -46,10 +49,9 @@ public class OrdersController {
         if(!result){
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
         }
-//        CompletableFuture.runAsync(()->{
-//            ordersService.trade(orders.getId());
-//        });
-        ordersService.trade(orders.getId());
+        CompletableFuture.runAsync(()->{
+            tradeFeignClient.trade(orders.getId());
+        });
         return ResultUtils.success(orders.getId());
     }
     /**

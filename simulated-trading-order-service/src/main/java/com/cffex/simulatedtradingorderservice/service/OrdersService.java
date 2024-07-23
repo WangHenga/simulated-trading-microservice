@@ -14,7 +14,6 @@ public interface OrdersService extends IService<Orders> {
 
     Boolean cancelOrder(Integer orderId);
 
-    void trade(Integer orderId);
-
     boolean validClose(Integer positionId,Integer volume);
+    void updateOrderVolume(Integer orderId, int volume);
 }
