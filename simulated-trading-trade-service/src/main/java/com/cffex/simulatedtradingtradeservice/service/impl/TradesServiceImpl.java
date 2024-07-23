@@ -17,6 +17,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -88,7 +89,7 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
         Integer remain = volumeTotal;
         if(remain>0){
             // 订单有剩余加入队列
-            long score=this.getScore(limitPrice,direction);
+            long score=this.getScore(order,direction);
             zSetOperations.add(instrumentId.toString() + "_" + direction,orderId.toString(),score);
             valueOperations.set("order_"+orderId.toString(),remain.toString());
         }
@@ -203,8 +204,9 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
         orderFeignClient.updateOrderVolume(orderId,volume);
     }
 
-    private long getScore(BigDecimal price,Integer direction){
-        long time = System.currentTimeMillis();
+    private long getScore(Orders order,Integer direction){
+        BigDecimal price=order.getLimitPrice();
+        long time = order.getCreateTime().getTime();
         long l=0xffffffffL;
         long p=price.multiply(new BigDecimal("100")).intValue();
         if(direction.equals(DirectionEnum.CALL.getCode())){
