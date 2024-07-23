@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cffex.simulatedtradingorderservice.mapper.OrdersMapper">
+
+    <resultMap id="BaseResultMap" type="com.cffex.simulatedtradingmodel.entity.Orders">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="userId" column="userId" jdbcType="INTEGER"/>
+            <result property="instrumentId" column="instrumentId" jdbcType="INTEGER"/>
+            <result property="direction" column="direction" jdbcType="TINYINT"/>
+            <result property="combOffsetFlag" column="combOffsetFlag" jdbcType="TINYINT"/>
+            <result property="limitPrice" column="limitPrice" jdbcType="DECIMAL"/>
+            <result property="orderStatus" column="orderStatus" jdbcType="TINYINT"/>
+            <result property="volumeTraded" column="volumeTraded" jdbcType="INTEGER"/>
+            <result property="volumeTotal" column="volumeTotal" jdbcType="INTEGER"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="cancelTime" column="cancelTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,userId,instrumentId,
+        direction,combOffsetFlag,limitPrice,
+        orderStatus,volumeTraded,volumeTotal,
+        createTime,updateTime,cancelTime,
+        isDelete
+    </sql>
+</mapper>

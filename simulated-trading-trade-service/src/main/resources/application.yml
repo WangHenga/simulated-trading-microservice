@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: simulated-trading-trade-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  redis:
+    database: 1
+    host: localhost
+    port: 6379
+    timeout: 5000
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql:///simulated_trading_db?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: 123456
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false # 禁止将_转为驼峰，model中的各个字段和数据库中保持一致
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    lazy-loading-enabled: true # 开启延时加载
+    aggressive-lazy-loading: false # 禁用侵入式延时加载
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 全局逻辑删除的实体字段名
+      logic-delete-value: 1 # 逻辑已删除值（默认为 1）
+      logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
+server:
+  servlet:
+    context-path: /trade
+  port: 8085

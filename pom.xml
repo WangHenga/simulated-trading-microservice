@@ -20,6 +20,10 @@
         <module>simulated-trading-user-service</module>
         <module>simulated-trading-gateway</module>
         <module>simulated-trading-instrument-service</module>
+        <module>simulated-trading-order-service</module>
+        <module>simulated-trading-position-service</module>
+        <module>simulated-trading-service-client</module>
+        <module>simulated-trading-trade-service</module>
     </modules>
     <dependencies>
         <dependency>

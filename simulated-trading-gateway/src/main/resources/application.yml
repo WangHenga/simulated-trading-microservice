@@ -13,6 +13,18 @@ spring:
           uri: lb://simulated-trading-instrument-service
           predicates:
             - Path=/instrument/**
+        - id: simulated-trading-order-service
+          uri: lb://simulated-trading-order-service
+          predicates:
+            - Path=/order/**
+        - id: simulated-trading-position-service
+          uri: lb://simulated-trading-position-service
+          predicates:
+            - Path=/position/**
+        - id: simulated-trading-trade-service
+          uri: lb://simulated-trading-trade-service
+          predicates:
+            - Path=/trade/**
   application:
     name: simulated-trading-gateway
   main:
