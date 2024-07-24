@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cffex.simulatedtradingmodel.entity.*;
 import com.cffex.simulatedtradingmodel.enums.CombOffsetEnum;
 import com.cffex.simulatedtradingmodel.enums.DirectionEnum;
+import com.cffex.simulatedtradingmodel.enums.OrderStatusEnum;
 import com.cffex.simulatedtradingserviceclient.*;
 import com.cffex.simulatedtradingtradeservice.mapper.TradesMapper;
 import com.cffex.simulatedtradingtradeservice.service.TradesService;
@@ -44,6 +45,9 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
     @Override
     public void trade(Integer orderId) {
         Orders order = orderFeignClient.getById(orderId);
+        if(redisTemplate.hasKey("order_"+orderId)||!order.getOrderStatus().equals(OrderStatusEnum.UNFILLED.getCode())){
+            return;
+        }
         Integer direction = order.getDirection();
         Integer instrumentId = order.getInstrumentId();
         Integer volumeTotal = order.getVolumeTotal();
@@ -364,7 +368,3 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
         return result == 1;
     }
 }
-
-
-
-

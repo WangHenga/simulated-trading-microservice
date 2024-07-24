@@ -5,9 +5,10 @@ import com.cffex.simulatedtradingmodel.common.BaseResponse;
 import com.cffex.simulatedtradingmodel.common.ErrorCode;
 import com.cffex.simulatedtradingmodel.common.ResultUtils;
 import com.cffex.simulatedtradingmodel.common.ThreadLocalUtil;
-import com.cffex.simulatedtradingmodel.exception.BusinessException;
 import com.cffex.simulatedtradingmodel.dto.orders.OrderCreateRequest;
 import com.cffex.simulatedtradingmodel.entity.Orders;
+import com.cffex.simulatedtradingmodel.exception.BusinessException;
+import com.cffex.simulatedtradingorderservice.mq.MessageProducer;
 import com.cffex.simulatedtradingorderservice.service.OrdersService;
 import com.cffex.simulatedtradingserviceclient.TradeFeignClient;
 import org.springframework.beans.BeanUtils;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 public class OrdersController {
@@ -24,6 +24,8 @@ public class OrdersController {
     private OrdersService ordersService;
     @Resource
     private TradeFeignClient tradeFeignClient;
+    @Resource
+    private MessageProducer messageProducer;
     /**
      * 创建订单
      *
@@ -49,9 +51,10 @@ public class OrdersController {
         if(!result){
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
         }
-        CompletableFuture.runAsync(()->{
-            tradeFeignClient.trade(orders.getId());
-        });
+//        CompletableFuture.runAsync(()->{
+//            tradeFeignClient.trade(orders.getId());
+//        });
+        messageProducer.sendMessage(orders.getId().toString());
         return ResultUtils.success(orders.getId());
     }
     /**
