@@ -30,3 +30,5 @@ server:
   servlet:
     context-path: /user
   port: 8081
+knife4j:
+  enable: true

@@ -203,6 +203,7 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
         user.setFrozenMargin(frozenMargin);
         user.setUsedMargin(usedMargin);
         userFeignClient.updateById(user);
+        position.setLastUpdateTime(null);
         positionFeignClient.updateById(position);
         // 更新订单
         orderFeignClient.updateOrderVolume(orderId,volume);

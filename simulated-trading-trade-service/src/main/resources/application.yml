@@ -36,3 +36,5 @@ server:
   servlet:
     context-path: /trade
   port: 8085
+knife4j:
+  enable: true

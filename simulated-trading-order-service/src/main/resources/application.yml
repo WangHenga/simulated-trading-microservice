@@ -36,3 +36,5 @@ server:
   servlet:
     context-path: /order
   port: 8083
+knife4j:
+  enable: true
