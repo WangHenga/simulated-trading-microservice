@@ -39,8 +39,6 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
     @Resource
     private OrderFeignClient orderFeignClient;
     @Resource
-    private TradeFeignClient tradeFeignClient;
-    @Resource
     private InstrumentFeignClient instrumentFeignClient;
     @Resource
     private PositionFeignClient positionFeignClient;
@@ -147,7 +145,7 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
             trade.setBuyOrderId(secondOrderId);
             trade.setSellOrderId(firstOrderId);
         }
-        tradeFeignClient.save(trade);
+        this.save(trade);
     }
 
     private void deal(Integer orderId, BigDecimal transactionPrice, int volume) {

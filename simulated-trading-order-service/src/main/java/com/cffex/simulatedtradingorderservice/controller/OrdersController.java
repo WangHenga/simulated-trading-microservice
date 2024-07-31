@@ -13,7 +13,6 @@ import com.cffex.simulatedtradingmodel.exception.BusinessException;
 import com.cffex.simulatedtradingmodel.vo.OrderVO;
 import com.cffex.simulatedtradingorderservice.mq.MessageProducer;
 import com.cffex.simulatedtradingorderservice.service.OrdersService;
-import com.cffex.simulatedtradingserviceclient.TradeFeignClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,8 +24,6 @@ import javax.annotation.Resource;
 public class OrdersController {
     @Resource
     private OrdersService ordersService;
-    @Resource
-    private TradeFeignClient tradeFeignClient;
     @Resource
     private MessageProducer messageProducer;
     /**
@@ -54,9 +51,6 @@ public class OrdersController {
         if(!result){
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
         }
-//        CompletableFuture.runAsync(()->{
-//            tradeFeignClient.trade(orders.getId());
-//        });
         messageProducer.sendMessage(orders.getId().toString());
         return ResultUtils.success(orders.getId());
     }
