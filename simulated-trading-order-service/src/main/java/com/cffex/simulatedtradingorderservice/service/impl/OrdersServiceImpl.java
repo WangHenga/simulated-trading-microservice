@@ -266,8 +266,8 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         // 拼接查询条件
         queryWrapper.eq("userId", userId);
         queryWrapper.eq("isDelete", false);
-        queryWrapper.eq("orderStatus", OrderStatusEnum.UNFILLED.getCode())
-                .or().eq("orderStatus", OrderStatusEnum.PARTIALLY_FILLED.getCode());
+        queryWrapper.and(wrapper -> wrapper.eq("orderStatus", OrderStatusEnum.UNFILLED.getCode())
+                .or().eq("orderStatus", OrderStatusEnum.PARTIALLY_FILLED.getCode()));
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
