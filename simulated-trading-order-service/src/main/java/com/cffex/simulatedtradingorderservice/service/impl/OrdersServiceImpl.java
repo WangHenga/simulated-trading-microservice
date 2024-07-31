@@ -1,31 +1,36 @@
 package com.cffex.simulatedtradingorderservice.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cffex.simulatedtradingmodel.common.ThreadLocalUtil;
-import com.cffex.simulatedtradingmodel.entity.*;
+import com.cffex.simulatedtradingmodel.constant.CommonConstant;
+import com.cffex.simulatedtradingmodel.dto.orders.OrderQueryRequest;
+import com.cffex.simulatedtradingmodel.entity.Instrument;
+import com.cffex.simulatedtradingmodel.entity.Orders;
+import com.cffex.simulatedtradingmodel.entity.Positions;
+import com.cffex.simulatedtradingmodel.entity.User;
 import com.cffex.simulatedtradingmodel.enums.CombOffsetEnum;
 import com.cffex.simulatedtradingmodel.enums.DirectionEnum;
 import com.cffex.simulatedtradingmodel.enums.InstrumentStateEnum;
 import com.cffex.simulatedtradingmodel.enums.OrderStatusEnum;
+import com.cffex.simulatedtradingmodel.utils.SqlUtils;
+import com.cffex.simulatedtradingmodel.vo.OrderVO;
 import com.cffex.simulatedtradingorderservice.mapper.OrdersMapper;
 import com.cffex.simulatedtradingorderservice.service.OrdersService;
 import com.cffex.simulatedtradingserviceclient.InstrumentFeignClient;
 import com.cffex.simulatedtradingserviceclient.PositionFeignClient;
 import com.cffex.simulatedtradingserviceclient.TradeFeignClient;
 import com.cffex.simulatedtradingserviceclient.UserFeignClient;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -253,6 +258,62 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(luaScript, Long.class);
         Long result= Long.parseLong(redisTemplate.execute(redisScript, Collections.singletonList("position_" + positionId), volume.toString()).toString());
         return result==1;
+    }
+
+    @Override
+    public QueryWrapper<Orders> getQueryWrapper(OrderQueryRequest orderQueryRequest, Integer userId) {
+        QueryWrapper<Orders> queryWrapper = new QueryWrapper<>();
+        if (orderQueryRequest == null|| userId==null) {
+            return queryWrapper;
+        }
+        String sortField = orderQueryRequest.getSortField();
+        String sortOrder = orderQueryRequest.getSortOrder();
+        // 拼接查询条件
+        queryWrapper.eq("userId", userId);
+        queryWrapper.eq("isDelete", false);
+        queryWrapper.eq("orderStatus", OrderStatusEnum.UNFILLED.getCode())
+                .or().eq("orderStatus", OrderStatusEnum.PARTIALLY_FILLED.getCode());
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
+                sortField);
+        return queryWrapper;
+    }
+
+    @Override
+    public Page<OrderVO> getOrderVOPage(Page<Orders> orderPage) {
+        List<Orders> orderList = orderPage.getRecords();
+        Page<OrderVO> orderVOPage = new Page<>(orderPage.getCurrent(), orderPage.getSize(), orderPage.getTotal());
+        if (orderList.isEmpty()) {
+            return orderVOPage;
+        }
+        Map<Integer,String> instrumentMap = new HashMap<>();
+        List<OrderVO> orderVOList = new ArrayList<>();
+        for(Orders order:orderList){
+            instrumentMap.put(order.getInstrumentId(),null);
+        }
+        for(Integer instrumentId: instrumentMap.keySet()){
+            Instrument instrument = instrumentFeignClient.getById(instrumentId);
+            if (instrument != null) {
+                instrumentMap.put(instrumentId, instrument.getName());
+            }
+        }
+        for(Orders order:orderList){
+            OrderVO orderVO = new OrderVO();
+            BeanUtils.copyProperties(order, orderVO);
+            if(order.getDirection().equals(DirectionEnum.CALL.getCode())){
+                orderVO.setDirectionStr(DirectionEnum.CALL.getMessage());
+            }else{
+                orderVO.setDirectionStr(DirectionEnum.PUT.getMessage());
+            }
+            if(order.getCombOffsetFlag().equals(CombOffsetEnum.OPEN.getCode())){
+                orderVO.setCombOffsetStr(CombOffsetEnum.OPEN.getMessage());
+            }else{
+                orderVO.setCombOffsetStr(CombOffsetEnum.CLOSE.getMessage());
+            }
+            orderVO.setInstrumentName(instrumentMap.get(order.getInstrumentId()));
+            orderVOList.add(orderVO);
+        }
+        orderVOPage.setRecords(orderVOList);
+        return orderVOPage;
     }
 
 }

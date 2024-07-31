@@ -1,13 +1,16 @@
 package com.cffex.simulatedtradingorderservice.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cffex.simulatedtradingmodel.annotation.AuthCheck;
 import com.cffex.simulatedtradingmodel.common.BaseResponse;
 import com.cffex.simulatedtradingmodel.common.ErrorCode;
 import com.cffex.simulatedtradingmodel.common.ResultUtils;
 import com.cffex.simulatedtradingmodel.common.ThreadLocalUtil;
 import com.cffex.simulatedtradingmodel.dto.orders.OrderCreateRequest;
+import com.cffex.simulatedtradingmodel.dto.orders.OrderQueryRequest;
 import com.cffex.simulatedtradingmodel.entity.Orders;
 import com.cffex.simulatedtradingmodel.exception.BusinessException;
+import com.cffex.simulatedtradingmodel.vo.OrderVO;
 import com.cffex.simulatedtradingorderservice.mq.MessageProducer;
 import com.cffex.simulatedtradingorderservice.service.OrdersService;
 import com.cffex.simulatedtradingserviceclient.TradeFeignClient;
@@ -69,5 +72,20 @@ public class OrdersController {
     public BaseResponse<Boolean> cancelOrder(Integer orderId) {
         boolean result=ordersService.cancelOrder(orderId);
         return ResultUtils.success(result);
+    }
+
+    @PostMapping("/list/page")
+    @AuthCheck
+    public BaseResponse<Page<OrderVO>> queryOrderList(@RequestBody OrderQueryRequest orderQueryRequest) {
+        Integer userId = ThreadLocalUtil.getUserId();
+        if(orderQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        long current = orderQueryRequest.getCurrent();
+        long size = orderQueryRequest.getPageSize();
+        Page<Orders> orderPage = ordersService.page(new Page<>(current, size),
+                ordersService.getQueryWrapper(orderQueryRequest,userId));
+
+        return ResultUtils.success(ordersService.getOrderVOPage(orderPage));
     }
 }

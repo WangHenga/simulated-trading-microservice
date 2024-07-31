@@ -1,13 +1,16 @@
 package com.cffex.simulatedtradinginstrumentservice.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cffex.simulatedtradingmodel.common.BaseResponse;
 import com.cffex.simulatedtradingmodel.common.ErrorCode;
 import com.cffex.simulatedtradingmodel.common.ResultUtils;
+import com.cffex.simulatedtradingmodel.dto.instrument.InstrumentQueryRequest;
 import com.cffex.simulatedtradingmodel.exception.BusinessException;
 import com.cffex.simulatedtradingmodel.dto.instrument.InstrumentAddRequest;
 import com.cffex.simulatedtradingmodel.dto.instrument.InstrumentUpdateRequest;
 import com.cffex.simulatedtradingmodel.entity.Instrument;
 import com.cffex.simulatedtradinginstrumentservice.service.InstrumentService;
+import com.cffex.simulatedtradingmodel.vo.InstrumentVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,5 +54,21 @@ public class InstrumentController {
     public BaseResponse<Instrument> queryInstrument(Integer instrumentId) {
         Instrument instrument = instrumentService.getById(instrumentId);
         return ResultUtils.success(instrument);
+    }
+
+    @GetMapping("/info")
+    public BaseResponse<InstrumentVO> getInstrumentInfo(Integer instrumentId) {
+        return ResultUtils.success(instrumentService.getVOById(instrumentId));
+    }
+    @PostMapping("/list/page")
+    public BaseResponse<Page<Instrument>> queryInstrumentList(@RequestBody InstrumentQueryRequest instrumentQueryRequest) {
+        if(instrumentQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        long current = instrumentQueryRequest.getCurrent();
+        long size = instrumentQueryRequest.getPageSize();
+        Page<Instrument> instrumentPage = instrumentService.page(new Page<>(current, size),
+                instrumentService.getQueryWrapper(instrumentQueryRequest));
+        return ResultUtils.success(instrumentPage);
     }
 }

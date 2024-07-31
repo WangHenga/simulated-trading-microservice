@@ -1,7 +1,10 @@
 package com.cffex.simulatedtradingtradeservice.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cffex.simulatedtradingmodel.dto.trade.TradeDTO;
 import com.cffex.simulatedtradingmodel.entity.Trades;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author 17204
@@ -10,7 +13,7 @@ import com.cffex.simulatedtradingmodel.entity.Trades;
 * @Entity com.cffex.SimulatedTrading.model.entity.Trades
 */
 public interface TradesMapper extends BaseMapper<Trades> {
-
+    Page<TradeDTO> selectPageTrade(@Param("page") Page<?> page, @Param("userId") Integer userId);
 }
 
 

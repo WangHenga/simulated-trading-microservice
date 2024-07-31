@@ -1,16 +1,28 @@
 package com.cffex.simulatedtradinginstrumentservice.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cffex.simulatedtradinginstrumentservice.mapper.InstrumentMapper;
+import com.cffex.simulatedtradingmodel.constant.CommonConstant;
+import com.cffex.simulatedtradingmodel.dto.instrument.InstrumentQueryRequest;
 import com.cffex.simulatedtradingmodel.entity.Instrument;
 import com.cffex.simulatedtradinginstrumentservice.service.InstrumentService;
+import com.cffex.simulatedtradingmodel.enums.InstrumentStateEnum;
+import com.cffex.simulatedtradingmodel.utils.SqlUtils;
+import com.cffex.simulatedtradingmodel.vo.InstrumentVO;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.Set;
 
 /**
 * @author 17204
@@ -74,6 +86,85 @@ public class InstrumentServiceImpl extends ServiceImpl<InstrumentMapper, Instrum
         instrument.setId(instrumentId);
         instrument.setLastPrice(transactionPrice);
         this.updateById(instrument);
+    }
+
+    @Override
+    public QueryWrapper<Instrument> getQueryWrapper(InstrumentQueryRequest instrumentQueryRequest) {
+        QueryWrapper<Instrument> queryWrapper = new QueryWrapper<>();
+        if (instrumentQueryRequest == null) {
+            return queryWrapper;
+        }
+        String name = instrumentQueryRequest.getName();
+        String symbol = instrumentQueryRequest.getSymbol();
+        String sortField = instrumentQueryRequest.getSortField();
+        String sortOrder = instrumentQueryRequest.getSortOrder();
+        // 拼接查询条件
+        queryWrapper.like(StringUtils.isNotBlank(name), "name", name);
+        queryWrapper.like(StringUtils.isNotBlank(symbol), "symbol", symbol);
+        queryWrapper.eq("isDelete", false);
+        queryWrapper.eq("state", InstrumentStateEnum.LISTED.getCode());
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
+                sortField);
+        return queryWrapper;
+    }
+
+    @Override
+    public InstrumentVO getVOById(Integer instrumentId) {
+        Instrument instrument = this.getById(instrumentId);
+        InstrumentVO instrumentVO = new InstrumentVO();
+        BeanUtils.copyProperties(instrument, instrumentVO);
+        instrumentVO.setLastPriceStr(instrument.getLastPrice().toString());
+        instrumentVO.setMinPriceChangeStr(instrument.getMinPriceChange().toString());
+        // TODO 计算买卖价格以及涨跌停价格
+        ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
+        ValueOperations valueOperations = redisTemplate.opsForValue();
+        Set<ZSetOperations.TypedTuple<String>> bestPriceOrderSet = zSetOperations.rangeWithScores(instrumentId + "_0",0,0);
+        if(bestPriceOrderSet==null||bestPriceOrderSet.isEmpty()){
+            instrumentVO.setBuyPriceStr(instrument.getLastPrice().toString());
+            instrumentVO.setBuyVolume(0);
+        }else {
+            ZSetOperations.TypedTuple<String> bestPriceOrder = bestPriceOrderSet.iterator().next();
+            long score = new BigDecimal(bestPriceOrder.getScore()).longValue();
+            BigDecimal price=new BigDecimal((score>>32)+"").divide(new BigDecimal("100")).setScale(2,BigDecimal.ROUND_HALF_UP).abs();
+            instrumentVO.setBuyPriceStr(price.toString());
+            Set<String> buySet = zSetOperations.range(instrumentId + "_0", 0, -1);
+            Integer buyVolume = 0;
+            for(String orderId:buySet){
+                Object value = valueOperations.get("order_" + orderId);
+                if(value!=null){
+                    buyVolume+=Integer.parseInt(value.toString());
+                }
+            }
+            instrumentVO.setBuyVolume(buyVolume);
+        }
+        bestPriceOrderSet = zSetOperations.rangeWithScores(instrumentId + "_1",0,0);
+        if(bestPriceOrderSet==null||bestPriceOrderSet.isEmpty()){
+            instrumentVO.setSellPriceStr(instrument.getLastPrice().toString());
+            instrumentVO.setSellVolume(0);
+        }else {
+            ZSetOperations.TypedTuple<String> bestPriceOrder = bestPriceOrderSet.iterator().next();
+            long score = new BigDecimal(bestPriceOrder.getScore()).longValue();
+            BigDecimal price=new BigDecimal((score>>32)+"").divide(new BigDecimal("100")).setScale(2,BigDecimal.ROUND_HALF_UP).abs();
+            instrumentVO.setSellPriceStr(price.toString());
+            Set<String> sellSet = zSetOperations.range(instrumentId + "_1", 0, -1);
+            Integer sellVolume = 0;
+            for(String orderId:sellSet){
+                Object value = valueOperations.get("order_" + orderId);
+                if(value!=null){
+                    sellVolume+=Integer.parseInt(value.toString());
+                }
+            }
+            instrumentVO.setSellVolume(sellVolume);
+        }
+        BigDecimal settlementPrice = instrument.getSettlementPrice();
+        BigDecimal maxDailyPriceFluctuation = instrument.getMaxDailyPriceFluctuation();
+        BigDecimal maxPrice=settlementPrice.multiply(maxDailyPriceFluctuation.divide(new BigDecimal("100"),2, RoundingMode.HALF_UP).add(BigDecimal.ONE));
+        maxPrice = maxPrice.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal minPrice=settlementPrice.multiply(BigDecimal.ONE.subtract(maxDailyPriceFluctuation.divide(new BigDecimal("100"),2,RoundingMode.HALF_UP)));
+        minPrice = minPrice.setScale(2, RoundingMode.HALF_UP);
+        instrumentVO.setMinPrice(minPrice.toString());
+        instrumentVO.setMaxPrice(maxPrice.toString());
+        return instrumentVO;
     }
 
     private void saveInCache(Instrument instrument) {

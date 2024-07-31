@@ -168,6 +168,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         UserAccountVO userAccountVO = new UserAccountVO();
         BeanUtils.copyProperties(user, userAccountVO);
+        userAccountVO.setBalance(user.getBalance().toString());
+        userAccountVO.setFrozenMargin(user.getFrozenMargin().toString());
+        userAccountVO.setUsedMargin(user.getUsedMargin().toString());
         return userAccountVO;
     }
 

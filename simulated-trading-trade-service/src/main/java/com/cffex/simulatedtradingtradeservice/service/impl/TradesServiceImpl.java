@@ -1,13 +1,17 @@
 package com.cffex.simulatedtradingtradeservice.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.cffex.simulatedtradingmodel.dto.trade.TradeDTO;
 import com.cffex.simulatedtradingmodel.entity.*;
 import com.cffex.simulatedtradingmodel.enums.CombOffsetEnum;
 import com.cffex.simulatedtradingmodel.enums.DirectionEnum;
 import com.cffex.simulatedtradingmodel.enums.OrderStatusEnum;
+import com.cffex.simulatedtradingmodel.vo.TradeVO;
 import com.cffex.simulatedtradingserviceclient.*;
 import com.cffex.simulatedtradingtradeservice.mapper.TradesMapper;
 import com.cffex.simulatedtradingtradeservice.service.TradesService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -17,10 +21,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
 * @author 17204
@@ -42,6 +44,33 @@ public class TradesServiceImpl extends ServiceImpl<TradesMapper, Trades>
     private InstrumentFeignClient instrumentFeignClient;
     @Resource
     private PositionFeignClient positionFeignClient;
+    @Resource
+    private TradesMapper tradesMapper;
+    @Override
+    public Page<TradeDTO> getPageTrade(long current, long pageSize, int userId) {
+        Page<TradeDTO> tradePage = new Page<>(current, pageSize);
+        return tradesMapper.selectPageTrade(tradePage, userId);
+    }
+
+    @Override
+    public Page<TradeVO> getPageTradeVO(Page<TradeDTO> pageTrade) {
+        List<TradeDTO> tradeDTOList = pageTrade.getRecords();
+        Page<TradeVO> tradeVOPage = new Page<>(pageTrade.getCurrent(), pageTrade.getSize(), pageTrade.getTotal());
+        if(tradeDTOList==null||tradeDTOList.size()==0)
+            return tradeVOPage;
+        List<TradeVO> tradeVOList = new ArrayList<>(tradeDTOList.size());
+        for(TradeDTO tradeDTO:tradeDTOList){
+            TradeVO tradeVO = new TradeVO();
+            BeanUtils.copyProperties(tradeDTO, tradeVO);
+            tradeVO.setCreateTimeStr(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tradeDTO.getCreateTime()));
+            tradeVO.setPriceStr(tradeDTO.getPrice().toString());
+            tradeVO.setCombOffsetStr(tradeDTO.getCombOffsetFlag().equals(CombOffsetEnum.OPEN.getCode())?CombOffsetEnum.OPEN.getMessage():CombOffsetEnum.CLOSE.getMessage());
+            tradeVO.setDirectionStr(tradeDTO.getDirection().equals(DirectionEnum.CALL.getCode())? DirectionEnum.CALL.getMessage():DirectionEnum.PUT.getMessage());
+            tradeVOList.add(tradeVO);
+        }
+        tradeVOPage.setRecords(tradeVOList);
+        return tradeVOPage;
+    }
     @Override
     public void trade(Integer orderId) {
         Orders order = orderFeignClient.getById(orderId);

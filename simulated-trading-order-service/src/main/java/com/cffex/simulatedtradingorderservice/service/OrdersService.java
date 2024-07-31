@@ -1,7 +1,11 @@
 package com.cffex.simulatedtradingorderservice.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cffex.simulatedtradingmodel.dto.orders.OrderQueryRequest;
 import com.cffex.simulatedtradingmodel.entity.Orders;
+import com.cffex.simulatedtradingmodel.vo.OrderVO;
 
 /**
 * @author 17204
@@ -16,4 +20,8 @@ public interface OrdersService extends IService<Orders> {
 
     boolean validClose(Integer positionId,Integer volume);
     void updateOrderVolume(Integer orderId, int volume);
+
+    QueryWrapper<Orders> getQueryWrapper(OrderQueryRequest orderQueryRequest, Integer userId);
+
+    Page<OrderVO> getOrderVOPage(Page<Orders> orderPage);
 }

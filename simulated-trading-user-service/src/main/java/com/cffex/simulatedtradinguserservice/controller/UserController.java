@@ -1,8 +1,11 @@
 package com.cffex.simulatedtradinguserservice.controller;
 
+import com.cffex.simulatedtradingmodel.annotation.AuthCheck;
 import com.cffex.simulatedtradingmodel.common.BaseResponse;
 import com.cffex.simulatedtradingmodel.common.ErrorCode;
 import com.cffex.simulatedtradingmodel.common.ResultUtils;
+import com.cffex.simulatedtradingmodel.common.ThreadLocalUtil;
+import com.cffex.simulatedtradingmodel.entity.User;
 import com.cffex.simulatedtradingmodel.exception.BusinessException;
 import com.cffex.simulatedtradingmodel.dto.user.UserLoginRequest;
 import com.cffex.simulatedtradingmodel.dto.user.UserRegisterRequest;
@@ -11,6 +14,7 @@ import com.cffex.simulatedtradingmodel.vo.RegisterUserVO;
 import com.cffex.simulatedtradingmodel.vo.UserAccountVO;
 import com.cffex.simulatedtradinguserservice.service.UserService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -64,5 +68,18 @@ public class UserController {
         }
         UserAccountVO userAccount = userService.getAccountInfo(account);
         return ResultUtils.success(userAccount);
+    }
+
+    @GetMapping("/getUserInfo")
+    @AuthCheck
+    public BaseResponse<UserAccountVO> getUserInfo(HttpServletRequest request) {
+        Integer userId = ThreadLocalUtil.getUserId();
+        User user = userService.getById(userId);
+        UserAccountVO userAccountVO = new UserAccountVO();
+        BeanUtils.copyProperties(user, userAccountVO);
+        userAccountVO.setBalance(user.getBalance().toString());
+        userAccountVO.setFrozenMargin(user.getFrozenMargin().toString());
+        userAccountVO.setUsedMargin(user.getUsedMargin().toString());
+        return ResultUtils.success(userAccountVO);
     }
 }

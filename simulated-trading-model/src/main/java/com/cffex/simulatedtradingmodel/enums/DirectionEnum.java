@@ -1,8 +1,8 @@
 package com.cffex.simulatedtradingmodel.enums;
 
 public enum DirectionEnum {
-    CALL(0, "看涨(买)"),
-    PUT(1, "看跌(卖)");
+    CALL(0, "买"),
+    PUT(1, "卖");
     /**
      * 状态码
      */

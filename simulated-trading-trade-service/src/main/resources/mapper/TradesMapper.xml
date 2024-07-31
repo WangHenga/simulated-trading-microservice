@@ -17,4 +17,19 @@
         id,sellOrderId,buyOrderId,
         price,volume,createTime
     </sql>
+    <select id="selectPageTrade" resultType="com.cffex.simulatedtradingmodel.dto.trade.TradeDTO">
+        SELECT
+            i.name AS instrumentName,
+            o.direction,
+            o.combOffsetFlag,
+            t.price,
+            t.volume,
+            t.createTime
+        FROM
+            orders o
+                right JOIN trades t ON (o.direction = 0 AND o.id = t.buyOrderId)
+                OR (o.direction = 1 AND o.id = t.sellOrderId)
+                JOIN instrument i ON o.instrumentId = i.id
+        WHERE o.userId = #{userId}
+    </select>
 </mapper>

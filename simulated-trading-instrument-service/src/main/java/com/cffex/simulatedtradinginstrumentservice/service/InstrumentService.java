@@ -1,7 +1,10 @@
 package com.cffex.simulatedtradinginstrumentservice.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cffex.simulatedtradingmodel.dto.instrument.InstrumentQueryRequest;
 import com.cffex.simulatedtradingmodel.entity.Instrument;
+import com.cffex.simulatedtradingmodel.vo.InstrumentVO;
 
 import java.math.BigDecimal;
 
@@ -16,4 +19,8 @@ public interface InstrumentService extends IService<Instrument> {
     Instrument getByIdWithCache(Integer instrumentId);
 
     void updateLastPriceByIdWithCache(Integer instrumentId, BigDecimal transactionPrice);
+
+    QueryWrapper<Instrument> getQueryWrapper(InstrumentQueryRequest instrumentQueryRequest);
+
+    InstrumentVO getVOById(Integer instrumentId);
 }

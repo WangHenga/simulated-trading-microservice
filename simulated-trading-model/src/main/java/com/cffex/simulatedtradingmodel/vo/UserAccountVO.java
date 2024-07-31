@@ -15,14 +15,14 @@ public class UserAccountVO implements Serializable {
     /**
      * 可用余额
      */
-    private BigDecimal balance;
+    private String balance;
     /**
      * 冻结保证金
      */
-    private BigDecimal frozenMargin;
+    private String frozenMargin;
 
     /**
      * 占用保证金
      */
-    private BigDecimal usedMargin;
+    private String usedMargin;
 }
