@@ -20,7 +20,6 @@ import com.cffex.simulatedtradingorderservice.mapper.OrdersMapper;
 import com.cffex.simulatedtradingorderservice.service.OrdersService;
 import com.cffex.simulatedtradingserviceclient.InstrumentFeignClient;
 import com.cffex.simulatedtradingserviceclient.PositionFeignClient;
-import com.cffex.simulatedtradingserviceclient.TradeFeignClient;
 import com.cffex.simulatedtradingserviceclient.UserFeignClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,7 +30,6 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
 * @author 17204
@@ -51,10 +49,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     private PositionFeignClient positionFeignClient;
     @Resource
     private OrdersMapper ordersMapper;
-    @Resource
-    private TradeFeignClient tradeFeignClient;
 
-    private final ReentrantLock lock=new ReentrantLock();
     /**
      * 验证订单信息是否合法
      *
