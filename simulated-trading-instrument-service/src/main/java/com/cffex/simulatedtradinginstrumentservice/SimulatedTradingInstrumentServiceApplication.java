@@ -16,6 +16,6 @@ public class SimulatedTradingInstrumentServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SimulatedTradingInstrumentServiceApplication.class, args);
-    }
+   }
 
 }

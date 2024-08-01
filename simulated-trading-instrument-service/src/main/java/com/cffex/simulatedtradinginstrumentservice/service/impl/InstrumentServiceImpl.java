@@ -115,7 +115,6 @@ public class InstrumentServiceImpl extends ServiceImpl<InstrumentMapper, Instrum
         BeanUtils.copyProperties(instrument, instrumentVO);
         instrumentVO.setLastPriceStr(instrument.getLastPrice().toString());
         instrumentVO.setMinPriceChangeStr(instrument.getMinPriceChange().toString());
-        // TODO 计算买卖价格以及涨跌停价格
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
         ValueOperations valueOperations = redisTemplate.opsForValue();
         Set<ZSetOperations.TypedTuple<String>> bestPriceOrderSet = zSetOperations.rangeWithScores(instrumentId + "_0",0,0);

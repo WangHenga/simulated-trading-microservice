@@ -108,7 +108,6 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
             userFeignClient.updateById(user);
             return 0;
         }else{
-            // TODO 用redis优化
             // 判断(已存在平仓订单的手数+平仓订单手数)是否小于持仓手数
             Positions position= positionFeignClient.getPosition(orders.getUserId(),instrumentId,orders.getDirection()^1);
             if(position==null) return -1;
@@ -132,8 +131,6 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if(!userId.equals(orders.getUserId())){
             return false;
         }
-        // TODO 使用lua脚本改写 从交易列表中删除订单
-        // TODO 更改redis中的position.remainVolume
         String key = orders.getInstrumentId().toString() + "_" + (orders.getDirection());
         redisTemplate.opsForZSet().remove(key,orderId.toString());
         Integer newVolumeTotal=Integer.parseInt(redisTemplate.opsForValue().get("order_"+orderId).toString());
