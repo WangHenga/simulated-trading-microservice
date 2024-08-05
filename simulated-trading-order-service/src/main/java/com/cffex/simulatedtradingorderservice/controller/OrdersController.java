@@ -92,15 +92,4 @@ public class OrdersController {
 
         return ResultUtils.success(ordersService.getOrderVOPage(orderPage));
     }
-//    @PostMapping("/create/test")
-//    public BaseResponse<Integer> createOrderTest(@RequestBody OrderCreateRequest request) {
-//        Orders orders = new Orders();
-//        BeanUtils.copyProperties(request, orders);
-//        orders.setUserId(0);
-//        boolean result = ordersService.save(orders);
-//        if(!result){
-//            throw new BusinessException(ErrorCode.OPERATION_ERROR);
-//        }
-//        return ResultUtils.success(orders.getId());
-//    }
 }
