@@ -14,11 +14,13 @@ import com.cffex.simulatedtradingmodel.vo.OrderVO;
 import com.cffex.simulatedtradingorderservice.mq.MessageProducer;
 import com.cffex.simulatedtradingorderservice.service.OrdersService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 public class OrdersController {
@@ -26,6 +28,9 @@ public class OrdersController {
     private OrdersService ordersService;
     @Resource
     private MessageProducer messageProducer;
+    @Resource
+    private RedisTemplate redisTemplate;
+
     /**
      * 创建订单
      *
@@ -42,18 +47,23 @@ public class OrdersController {
         Orders orders = new Orders();
         BeanUtils.copyProperties(request, orders);
         orders.setUserId(userId);
-        Integer positionId=ordersService.validate(orders);
-        if(positionId<0){
+        Integer positionId = ordersService.validate(orders);
+        if (positionId < 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         orders.setPositionId(positionId);
-        boolean result = ordersService.save(orders);
-        if(!result){
-            throw new BusinessException(ErrorCode.OPERATION_ERROR);
-        }
-        messageProducer.sendMessage(orders.getId().toString());
+        Long orderId=redisTemplate.opsForValue().increment("order_id_select");
+        orders.setId(Integer.parseInt(orderId.toString()));
+        CompletableFuture.runAsync(()->{
+            boolean result = ordersService.save(orders);
+            if (!result) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR);
+            }
+            messageProducer.sendMessage(orders.getId().toString());
+        });
         return ResultUtils.success(orders.getId());
     }
+
     /**
      * 取消订单
      *
@@ -64,7 +74,7 @@ public class OrdersController {
     @PostMapping("/cancel")
     @AuthCheck
     public BaseResponse<Boolean> cancelOrder(Integer orderId) {
-        boolean result=ordersService.cancelOrder(orderId);
+        boolean result = ordersService.cancelOrder(orderId);
         return ResultUtils.success(result);
     }
 
@@ -72,14 +82,25 @@ public class OrdersController {
     @AuthCheck
     public BaseResponse<Page<OrderVO>> queryOrderList(@RequestBody OrderQueryRequest orderQueryRequest) {
         Integer userId = ThreadLocalUtil.getUserId();
-        if(orderQueryRequest == null) {
+        if (orderQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         long current = orderQueryRequest.getCurrent();
         long size = orderQueryRequest.getPageSize();
         Page<Orders> orderPage = ordersService.page(new Page<>(current, size),
-                ordersService.getQueryWrapper(orderQueryRequest,userId));
+                ordersService.getQueryWrapper(orderQueryRequest, userId));
 
         return ResultUtils.success(ordersService.getOrderVOPage(orderPage));
     }
+//    @PostMapping("/create/test")
+//    public BaseResponse<Integer> createOrderTest(@RequestBody OrderCreateRequest request) {
+//        Orders orders = new Orders();
+//        BeanUtils.copyProperties(request, orders);
+//        orders.setUserId(0);
+//        boolean result = ordersService.save(orders);
+//        if(!result){
+//            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+//        }
+//        return ResultUtils.success(orders.getId());
+//    }
 }

@@ -30,6 +30,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
 * @author 17204
@@ -50,6 +51,22 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     @Resource
     private OrdersMapper ordersMapper;
 
+    private Instrument getInstrumentById(Integer instrumentId){
+        if(redisTemplate.hasKey("instrument_"+instrumentId)){
+            Instrument instrument = new Instrument();
+            instrument.setId(instrumentId);
+            instrument.setLastPrice(new BigDecimal(redisTemplate.opsForHash().get("instrument_"+instrumentId, "lastPrice").toString()));
+            instrument.setMinPriceChange(new BigDecimal(redisTemplate.opsForHash().get("instrument_"+instrumentId, "minPriceChange").toString()));
+            instrument.setMinMarginRate(new BigDecimal(redisTemplate.opsForHash().get("instrument_"+instrumentId, "minMarginRate").toString()));
+            instrument.setMaxDailyPriceFluctuation(new BigDecimal(redisTemplate.opsForHash().get("instrument_"+instrumentId, "maxDailyPriceFluctuation").toString()));
+            instrument.setMultiplier(new BigDecimal(redisTemplate.opsForHash().get("instrument_"+instrumentId, "multiplier").toString()));
+            instrument.setSettlementPrice(new BigDecimal(redisTemplate.opsForHash().get("instrument_"+instrumentId, "settlementPrice").toString()));
+            instrument.setState(Integer.parseInt(redisTemplate.opsForHash().get("instrument_"+instrumentId, "state").toString()));
+            return instrument;
+        }else{
+            return instrumentFeignClient.getByIdWithCache(instrumentId);
+        }
+    }
     /**
      * 验证订单信息是否合法
      *
@@ -59,7 +76,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     @Override
     public Integer validate(Orders orders) {
         Integer instrumentId = orders.getInstrumentId();
-        Instrument instrument= instrumentFeignClient.getByIdWithCache(instrumentId);
+        Instrument instrument= this.getInstrumentById(instrumentId);
         // 验证合约是否存在且状态为上市
         if (instrument == null||!instrument.getState().equals(InstrumentStateEnum.LISTED.getCode())) {
             return -1;
@@ -105,7 +122,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
             if(!validBalance) return -1;
             user.setBalance(new BigDecimal(redisTemplate.opsForHash().get("account_"+user.getId(),"balance").toString()));
             user.setFrozenMargin(new BigDecimal(redisTemplate.opsForHash().get("account_"+user.getId(),"frozenMargin").toString()));
-            userFeignClient.updateById(user);
+            CompletableFuture.runAsync(()->{
+                userFeignClient.updateById(user);
+            });
             return 0;
         }else{
             // 判断(已存在平仓订单的手数+平仓订单手数)是否小于持仓手数
