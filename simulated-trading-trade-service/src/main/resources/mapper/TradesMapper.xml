@@ -26,10 +26,12 @@
             t.volume,
             t.createTime
         FROM
-            orders o
-                right JOIN trades t ON (o.direction = 0 AND o.id = t.buyOrderId)
+            trades t
+            inner join (
+                  select * from orders where userId = #{userId} and volumeTraded>0
+            ) o ON (o.direction = 0 AND o.id = t.buyOrderId)
                 OR (o.direction = 1 AND o.id = t.sellOrderId)
-                JOIN instrument i ON o.instrumentId = i.id
-        WHERE o.userId = #{userId}
+                inner join instrument i ON o.instrumentId = i.id
+        order by t.createTime desc
     </select>
 </mapper>

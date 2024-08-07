@@ -36,5 +36,8 @@ server:
   servlet:
     context-path: /order
   port: 8083
+  tomcat:
+    threads:
+      max: 400
 knife4j:
   enable: true

@@ -51,6 +51,9 @@ create table if not exists orders
     cancelTime datetime comment '撤销时间',
     isDelete tinyint default 0 not null comment '是否删除'
 )engine=innodb default charset=utf8 comment '订单信息表';
+create index idx_userId on orders(userId);
+create index idx_direction on orders(direction);
+create index idx_instrumentId on orders(instrumentId);
 
 drop table if exists positions;
 create table if not exists positions(
@@ -82,3 +85,5 @@ create table if not exists trades
     volume      int not null comment '成交量',
     createTime  datetime default current_timestamp not null comment '创建时间'
 )engine=innodb default charset=utf8 comment '成交记录表';
+create index idx_sellOrderId on trades(sellOrderId);
+create index idx_buyOrderId on trades(buyOrderId);

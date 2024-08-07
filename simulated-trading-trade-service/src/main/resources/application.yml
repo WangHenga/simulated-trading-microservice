@@ -36,5 +36,8 @@ server:
   servlet:
     context-path: /trade
   port: 8085
+  tomcat:
+    threads:
+      max: 400
 knife4j:
   enable: true

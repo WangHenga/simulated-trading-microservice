@@ -33,7 +33,16 @@ spring:
     resources:
       add-mappings: true
 server:
-  port: 80
+  port: 443
+
+  ssl:
+    enabled: true
+    key-store: classpath:tomcat_https.keystore
+    key-store-type: JKS
+    key-store-password: 123456
+  tomcat:
+    threads:
+      max: 400
 
 knife4j:
   gateway:
