@@ -17,7 +17,7 @@ public class Orders implements Serializable {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.INPUT)
     private Integer id;
 
     /**

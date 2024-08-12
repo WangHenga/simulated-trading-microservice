@@ -14,7 +14,7 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql:///simulated_trading_db?useUnicode=true&characterEncoding=utf-8
     username: root
-    password: 123456
+    password: 12345678
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false # 禁止将_转为驼峰，model中的各个字段和数据库中保持一致

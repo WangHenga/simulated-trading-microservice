@@ -36,7 +36,7 @@ create table if not exists instrument
 drop table if exists orders;
 create table if not exists orders
 (
-    id int not null auto_increment primary key comment 'id',
+    id int not null primary key comment 'id',
     userId int not null comment '用户id',
     instrumentId int not null comment '合约id',
     direction tinyint not null comment '买卖方向',
