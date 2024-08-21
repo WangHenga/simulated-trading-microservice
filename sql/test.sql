@@ -1,5 +1,3 @@
-use simulated_trading_db;
-
 select sum(marginOpe), userId
 from positions
 group by userId;
